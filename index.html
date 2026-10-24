@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Organizador de Inventario SL</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #161616; color: #ddd; margin: 0; padding: 12px; font-size: 13px; }
+        .grid { display: grid; grid-template-columns: 240px 1fr; gap: 12px; height: 380px; }
+        .column { background: #222; border-radius: 6px; padding: 10px; display: flex; flex-direction: column; overflow: hidden; border: 1px solid #333; }
+        .column h3 { margin: 0 0 8px 0; font-size: 14px; color: #fff; }
+        .list-box { flex: 1; overflow-y: auto; background: #111; border-radius: 4px; padding: 6px; border: 1px solid #282828; }
+        .item-card { background: #2a2a2a; padding: 6px 8px; margin-bottom: 6px; border-radius: 4px; cursor: pointer; user-select: none; display: flex; justify-content: space-between; align-items: center; }
+        .item-card:hover { background: #383838; }
+        .item-card.selected { border-left: 3px solid #0084ff; background: #1e3347; }
+        .controls { display: flex; gap: 6px; margin-bottom: 8px; }
+        input[type="text"] { background: #111; border: 1px solid #444; color: #fff; padding: 6px 8px; border-radius: 4px; width: 100%; }
+        button { background: #007acc; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        button:hover { background: #005f9e; }
+        .btn-trash { background: #b33a3a; }
+        .btn-trash:hover { background: #8f2828; }
+        .btn-apply { background: #2e7d32; font-size: 14px; width: 100%; padding: 10px; margin-top: 10px; }
+        .btn-apply:hover { background: #236327; }
+        .folder-block { background: #1a1a1a; border: 1px solid #383838; border-radius: 4px; padding: 8px; margin-bottom: 8px; }
+        .folder-header { font-weight: bold; color: #4fc3f7; margin-bottom: 6px; display: flex; justify-content: space-between; }
+        .trash-header { color: #ef5350; }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); align-items: center; justify-content: center; padding: 20px; }
+        .modal-content { background: #222; border-radius: 6px; padding: 16px; max-width: 480px; width: 100%; max-height: 80vh; display: flex; flex-direction: column; }
+        .modal-body { overflow-y: auto; flex: 1; margin: 12px 0; background: #151515; padding: 10px; border-radius: 4px; }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 8px; }
+    </style>
+</head>
+<body>
+
+    <div class="grid">
+        <div class="column">
+            <h3>Objetos Detectados</h3>
+            <div id="unassigned-list" class="list-box">Cargando ítems del HUD...</div>
+        </div>
+
+        <div class="column">
+            <div class="controls">
+                <input type="text" id="newFolderName" placeholder="Nueva carpeta...">
+                <button onclick="createFolder()">+ Crear</button>
+                <button class="btn-trash" onclick="assignToTrash()">A Descarte</button>
+            </div>
+            <div id="folders-container" class="list-box">
+                <div class="folder-block">
+                    <div class="folder-header trash-header">
+                        <span>Descarte (_POR_ELIMINAR_REVISAR)</span>
+                        <span id="trash-count">0 ítems</span>
+                    </div>
+                    <div id="trash-list"></div>
+                </div>
+                <div id="user-folders"></div>
+            </div>
+        </div>
+    </div>
+
+    <button class="btn-apply" onclick="openConfirmModal()">Revisar y Autorizar Cambios</button>
+
+    <div id="confirmModal" class="modal">
+        <div class="modal-content">
+            <h3>Confirmar Organización de Inventario</h3>
+            <p>Revisa la estructura antes de que el HUD cree las carpetas en tu inventario:</p>
+            <div id="modalSummary" class="modal-body"></div>
+            <div class="modal-actions">
+                <button style="background: #555;" onclick="closeModal()">Cancelar</button>
+                <button class="btn-apply" style="width: auto; margin: 0;" onclick="submitFinalOrder()">Autorizar y Aplicar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const slUrl = decodeURIComponent(params.get('sl_url'));
+
+        let availableItems = [];
+        let selectedItemNames = new Set();
+        let createdFolders = [];
+        let trashItems = [];
+
+        async function init() {
+            try {
+                const res = await fetch(slUrl, { method: 'GET' });
+                const data = await res.json();
+                availableItems = data.map(i => decodeURIComponent(i));
+                renderUnassigned();
+            } catch(e) {
+                document.getElementById('unassigned-list').innerText = "Esperando conexión o datos del HUD...";
+            }
+        }
+
+        function renderUnassigned() {
+            const list = document.getElementById('unassigned-list');
+            list.innerHTML = "";
+            availableItems.forEach(name => {
+                const card = document.createElement('div');
+                card.className = 'item-card' + (selectedItemNames.has(name) ? ' selected' : '');
+                card.innerText = name;
+                card.onclick = () => {
+                    if (selectedItemNames.has(name)) selectedItemNames.delete(name);
+                    else selectedItemNames.add(name);
+                    renderUnassigned();
+                };
+                list.appendChild(card);
+            });
+        }
+
+        function createFolder() {
+            const input = document.getElementById('newFolderName');
+            const name = input.value.trim();
+            if (!name) return;
+            if (selectedItemNames.size === 0) {
+                alert("Selecciona al menos un ítem de la columna izquierda para incluirlo en esta carpeta.");
+                return;
+            }
+
+            const itemsToAdd = Array.from(selectedItemNames);
+            createdFolders.push({ name: name, items: itemsToAdd });
+            
+            availableItems = availableItems.filter(i => !selectedItemNames.has(i));
+            selectedItemNames.clear();
+            input.value = "";
+
+            renderUnassigned();
+            renderFolders();
+        }
+
+        function assignToTrash() {
+            if (selectedItemNames.size === 0) {
+                alert("Selecciona los ítems que deseas marcar para descarte.");
+                return;
+            }
+            trashItems.push(...Array.from(selectedItemNames));
+            availableItems = availableItems.filter(i => !selectedItemNames.has(i));
+            selectedItemNames.clear();
+
+            renderUnassigned();
+            renderFolders();
+        }
+
+        function renderFolders() {
+            document.getElementById('trash-count').innerText = `${trashItems.length} ítems`;
+            document.getElementById('trash-list').innerHTML = trashItems.map(i => `<div style="color: #bbb; padding: 2px 4px;">• ${i}</div>`).join('');
+
+            const container = document.getElementById('user-folders');
+            container.innerHTML = createdFolders.map(f => `
+                <div class="folder-block">
+                    <div class="folder-header">
+                        <span>📁 ${f.name}</span>
+                        <span>${f.items.length} ítems</span>
+                    </div>
+                    <div>${f.items.map(it => `<div style="color: #bbb; padding: 2px 4px;">• ${it}</div>`).join('')}</div>
+                </div>
+            `).join('');
+        }
+
+        function openConfirmModal() {
+            if (createdFolders.length === 0 && trashItems.length === 0) {
+                alert("No has organizado carpetas ni marcado ítems para descarte aún.");
+                return;
+            }
+            const summary = document.getElementById('modalSummary');
+            let html = "";
+
+            if (createdFolders.length > 0) {
+                html += "<strong>Carpetas a crear:</strong><br>";
+                createdFolders.forEach(f => {
+                    html += `• <b>${f.name}</b> (${f.items.length} ítems)<br>`;
+                });
+            }
+
+            if (trashItems.length > 0) {
+                html += `<br><strong style="color: #ef5350;">Carpeta de descarte manual:</strong><br>`;
+                html += `• <b>_POR_ELIMINAR_REVISAR</b> (${trashItems.length} ítems para revisión manual)<br>`;
+            }
+
+            if (availableItems.length > 0) {
+                html += `<br><span style="color: #ffa726;">Nota: Quedarán ${availableItems.length} ítems sin organizar en el HUD.</span>`;
+            }
+
+            summary.innerHTML = html;
+            document.getElementById('confirmModal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('confirmModal').style.display = 'none';
+        }
+
+        async function submitFinalOrder() {
+            closeModal();
+            const payload = {
+                folders: createdFolders,
+                trash: trashItems
+            };
+
+            try {
+                const res = await fetch(slUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    alert("¡Orden autorizada y ejecutada! Revisa tu inventario de Second Life.");
+                    location.reload();
+                } else {
+                    alert("El HUD reportó un error al procesar las entregas.");
+                }
+            } catch(e) {
+                alert("Error de conexión con el HUD.");
+            }
+        }
+
+        if (slUrl) init();
+    </script>
+</body>
+</html>
