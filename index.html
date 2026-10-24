@@ -2,52 +2,69 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Organizador de Inventario SL</title>
+    <title>Stock Center - Organizador SL</title>
     <style>
         * { box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #161616; color: #ddd; margin: 0; padding: 12px; font-size: 13px; }
-        .grid { display: grid; grid-template-columns: 240px 1fr; gap: 12px; height: 380px; }
-        .column { background: #222; border-radius: 6px; padding: 10px; display: flex; flex-direction: column; overflow: hidden; border: 1px solid #333; }
-        .column h3 { margin: 0 0 8px 0; font-size: 14px; color: #fff; }
-        .list-box { flex: 1; overflow-y: auto; background: #111; border-radius: 4px; padding: 6px; border: 1px solid #282828; }
-        .item-card { background: #2a2a2a; padding: 6px 8px; margin-bottom: 6px; border-radius: 4px; cursor: pointer; user-select: none; display: flex; justify-content: space-between; align-items: center; }
-        .item-card:hover { background: #383838; }
-        .item-card.selected { border-left: 3px solid #0084ff; background: #1e3347; }
-        .controls { display: flex; gap: 6px; margin-bottom: 8px; }
-        input[type="text"] { background: #111; border: 1px solid #444; color: #fff; padding: 6px 8px; border-radius: 4px; width: 100%; }
-        button { background: #007acc; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #141414; color: #ddd; margin: 0; padding: 12px; font-size: 13px; }
+        .toolbar { background: #1e1e1e; padding: 10px; border-radius: 6px; margin-bottom: 10px; border: 1px solid #2e2e2e; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+        .grid { display: grid; grid-template-columns: 280px 1fr; gap: 12px; height: 380px; }
+        .column { background: #1e1e1e; border-radius: 6px; padding: 10px; display: flex; flex-direction: column; overflow: hidden; border: 1px solid #2e2e2e; }
+        .column h3 { margin: 0 0 8px 0; font-size: 13px; color: #fff; display: flex; justify-content: space-between; }
+        .list-box { flex: 1; overflow-y: auto; background: #121212; border-radius: 4px; padding: 6px; border: 1px solid #282828; }
+        .item-card { background: #262626; padding: 6px 8px; margin-bottom: 4px; border-radius: 4px; cursor: pointer; user-select: none; display: flex; justify-content: space-between; align-items: center; border-left: 3px solid transparent; }
+        .item-card:hover { background: #333; }
+        .item-card.selected { border-left-color: #0084ff; background: #1a2f45; }
+        .tag-old { background: #d97706; color: #000; font-size: 10px; font-weight: bold; padding: 2px 4px; border-radius: 3px; }
+        input[type="text"] { background: #121212; border: 1px solid #444; color: #fff; padding: 6px 8px; border-radius: 4px; }
+        button { background: #007acc; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600; }
         button:hover { background: #005f9e; }
-        .btn-trash { background: #b33a3a; }
-        .btn-trash:hover { background: #8f2828; }
-        .btn-apply { background: #2e7d32; font-size: 14px; width: 100%; padding: 10px; margin-top: 10px; }
-        .btn-apply:hover { background: #236327; }
-        .folder-block { background: #1a1a1a; border: 1px solid #383838; border-radius: 4px; padding: 8px; margin-bottom: 8px; }
-        .folder-header { font-weight: bold; color: #4fc3f7; margin-bottom: 6px; display: flex; justify-content: space-between; }
-        .trash-header { color: #ef5350; }
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); align-items: center; justify-content: center; padding: 20px; }
-        .modal-content { background: #222; border-radius: 6px; padding: 16px; max-width: 480px; width: 100%; max-height: 80vh; display: flex; flex-direction: column; }
-        .modal-body { overflow-y: auto; flex: 1; margin: 12px 0; background: #151515; padding: 10px; border-radius: 4px; }
+        .btn-warning { background: #d97706; color: #fff; }
+        .btn-warning:hover { background: #b45309; }
+        .btn-trash { background: #dc2626; color: #fff; }
+        .btn-trash:hover { background: #b91c1c; }
+        .btn-apply { background: #16a34a; font-size: 13px; width: 100%; padding: 10px; margin-top: 10px; font-weight: bold; }
+        .btn-apply:hover { background: #15803d; }
+        .folder-block { background: #161616; border: 1px solid #333; border-radius: 4px; padding: 8px; margin-bottom: 8px; }
+        .folder-header { font-weight: bold; color: #38bdf8; margin-bottom: 6px; display: flex; justify-content: space-between; }
+        .trash-header { color: #f87171; }
+        /* Modal */
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); align-items: center; justify-content: center; padding: 15px; }
+        .modal-content { background: #1e1e1e; border-radius: 6px; padding: 16px; max-width: 480px; width: 100%; max-height: 80vh; display: flex; flex-direction: column; border: 1px solid #444; }
+        .modal-body { overflow-y: auto; flex: 1; margin: 12px 0; background: #121212; padding: 10px; border-radius: 4px; line-height: 1.5; }
         .modal-actions { display: flex; justify-content: flex-end; gap: 8px; }
     </style>
 </head>
 <body>
 
+    <!-- Barra de Herramientas Inteligentes -->
+    <div class="toolbar">
+        <input type="text" id="filter" placeholder="Buscar por marca o nombre..." onkeyup="applyFilter()" style="flex: 1;">
+        <button class="btn-warning" onclick="selectOldMesh()" title="Detecta XS, S, M, L, XL, Standard Size">🔍 Detectar Tallas Antiguas</button>
+        <button style="background: #4b5563;" onclick="selectAllFiltered()">Seleccionar Todo</button>
+        <button style="background: #374151;" onclick="clearSelection()">Desmarcar</button>
+    </div>
+
     <div class="grid">
+        <!-- Columna 1: Ítems por clasificar -->
         <div class="column">
-            <h3>Objetos Detectados</h3>
-            <div id="unassigned-list" class="list-box">Cargando ítems del HUD...</div>
+            <h3>
+                <span>Objetos en HUD</span>
+                <span id="unassigned-count" style="color: #9ca3af; font-weight: normal;">0</span>
+            </h3>
+            <div id="unassigned-list" class="list-box">Cargando objetos desde el HUD...</div>
         </div>
 
+        <!-- Columna 2: Carpetas y descartes -->
         <div class="column">
-            <div class="controls">
-                <input type="text" id="newFolderName" placeholder="Nueva carpeta...">
+            <div style="display: flex; gap: 6px; margin-bottom: 8px;">
+                <input type="text" id="newFolderName" placeholder="Nombre de la carpeta..." style="flex: 1;">
                 <button onclick="createFolder()">+ Crear</button>
-                <button class="btn-trash" onclick="assignToTrash()">A Descarte</button>
+                <button class="btn-trash" onclick="assignToTrash()">Mover a Descarte</button>
             </div>
             <div id="folders-container" class="list-box">
                 <div class="folder-block">
                     <div class="folder-header trash-header">
-                        <span>Descarte (_POR_ELIMINAR_REVISAR)</span>
+                        <span>🗑️ Descarte (_POR_ELIMINAR_REVISAR)</span>
                         <span id="trash-count">0 ítems</span>
                     </div>
                     <div id="trash-list"></div>
@@ -57,16 +74,17 @@
         </div>
     </div>
 
-    <button class="btn-apply" onclick="openConfirmModal()">Revisar y Autorizar Cambios</button>
+    <button class="btn-apply" onclick="openConfirmModal()">Revisar y Autorizar Cambios en Second Life</button>
 
+    <!-- Modal de Confirmación -->
     <div id="confirmModal" class="modal">
         <div class="modal-content">
-            <h3>Confirmar Organización de Inventario</h3>
-            <p>Revisa la estructura antes de que el HUD cree las carpetas en tu inventario:</p>
+            <h3 style="margin-top: 0;">Autorizar Organización Segura</h3>
+            <p style="color: #bbb; margin-bottom: 8px;">Revisa las carpetas antes de la entrega final a tu inventario:</p>
             <div id="modalSummary" class="modal-body"></div>
             <div class="modal-actions">
-                <button style="background: #555;" onclick="closeModal()">Cancelar</button>
-                <button class="btn-apply" style="width: auto; margin: 0;" onclick="submitFinalOrder()">Autorizar y Aplicar</button>
+                <button style="background: #4b5563;" onclick="closeModal()">Cancelar</button>
+                <button class="btn-apply" style="width: auto; margin: 0;" onclick="submitFinalOrder()">Autorizar Entrega</button>
             </div>
         </div>
     </div>
@@ -80,6 +98,9 @@
         let createdFolders = [];
         let trashItems = [];
 
+        // Patrón para detectar tallas antiguas mesh estándar
+        const OLD_MESH_REGEX = /(\b(XS|S|M|L|XL)\b|standard\s*size|standard\s*sizing|classic\s*avatar)/i;
+
         async function init() {
             try {
                 const res = await fetch(slUrl, { method: 'GET' });
@@ -87,17 +108,28 @@
                 availableItems = data.map(i => decodeURIComponent(i));
                 renderUnassigned();
             } catch(e) {
-                document.getElementById('unassigned-list').innerText = "Esperando conexión o datos del HUD...";
+                document.getElementById('unassigned-list').innerText = "Esperando sincronización con el HUD...";
             }
         }
 
         function renderUnassigned() {
             const list = document.getElementById('unassigned-list');
+            const query = document.getElementById('filter').value.toLowerCase();
+            const filtered = availableItems.filter(item => item.toLowerCase().includes(query));
+            
+            document.getElementById('unassigned-count').innerText = `${filtered.length} / ${availableItems.length}`;
             list.innerHTML = "";
-            availableItems.forEach(name => {
+
+            filtered.forEach(name => {
+                const isOld = OLD_MESH_REGEX.test(name);
                 const card = document.createElement('div');
                 card.className = 'item-card' + (selectedItemNames.has(name) ? ' selected' : '');
-                card.innerText = name;
+                
+                card.innerHTML = `
+                    <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-right: 6px;">${name}</span>
+                    ${isOld ? '<span class="tag-old">Talla Antigua</span>' : ''}
+                `;
+
                 card.onclick = () => {
                     if (selectedItemNames.has(name)) selectedItemNames.delete(name);
                     else selectedItemNames.add(name);
@@ -107,18 +139,42 @@
             });
         }
 
+        function applyFilter() {
+            renderUnassigned();
+        }
+
+        function selectOldMesh() {
+            let matches = 0;
+            availableItems.forEach(name => {
+                if (OLD_MESH_REGEX.test(name)) {
+                    selectedItemNames.add(name);
+                    matches++;
+                }
+            });
+            renderUnassigned();
+            alert(`Se han detectado y seleccionado ${matches} objetos con formato de talla antigua.`);
+        }
+
+        function selectAllFiltered() {
+            const query = document.getElementById('filter').value.toLowerCase();
+            availableItems.filter(item => item.toLowerCase().includes(query)).forEach(name => {
+                selectedItemNames.add(name);
+            });
+            renderUnassigned();
+        }
+
+        function clearSelection() {
+            selectedItemNames.clear();
+            renderUnassigned();
+        }
+
         function createFolder() {
             const input = document.getElementById('newFolderName');
             const name = input.value.trim();
-            if (!name) return;
-            if (selectedItemNames.size === 0) {
-                alert("Selecciona al menos un ítem de la columna izquierda para incluirlo en esta carpeta.");
-                return;
-            }
+            if (!name) return alert("Asigna un nombre a la carpeta.");
+            if (selectedItemNames.size === 0) return alert("Selecciona al menos un objeto.");
 
-            const itemsToAdd = Array.from(selectedItemNames);
-            createdFolders.push({ name: name, items: itemsToAdd });
-            
+            createdFolders.push({ name: name, items: Array.from(selectedItemNames) });
             availableItems = availableItems.filter(i => !selectedItemNames.has(i));
             selectedItemNames.clear();
             input.value = "";
@@ -128,10 +184,7 @@
         }
 
         function assignToTrash() {
-            if (selectedItemNames.size === 0) {
-                alert("Selecciona los ítems que deseas marcar para descarte.");
-                return;
-            }
+            if (selectedItemNames.size === 0) return alert("Selecciona los objetos que deseas descartar.");
             trashItems.push(...Array.from(selectedItemNames));
             availableItems = availableItems.filter(i => !selectedItemNames.has(i));
             selectedItemNames.clear();
@@ -142,7 +195,7 @@
 
         function renderFolders() {
             document.getElementById('trash-count').innerText = `${trashItems.length} ítems`;
-            document.getElementById('trash-list').innerHTML = trashItems.map(i => `<div style="color: #bbb; padding: 2px 4px;">• ${i}</div>`).join('');
+            document.getElementById('trash-list').innerHTML = trashItems.map(i => `<div style="color: #9ca3af; padding: 2px 4px;">• ${i}</div>`).join('');
 
             const container = document.getElementById('user-folders');
             container.innerHTML = createdFolders.map(f => `
@@ -151,33 +204,32 @@
                         <span>📁 ${f.name}</span>
                         <span>${f.items.length} ítems</span>
                     </div>
-                    <div>${f.items.map(it => `<div style="color: #bbb; padding: 2px 4px;">• ${it}</div>`).join('')}</div>
+                    <div>${f.items.map(it => `<div style="color: #9ca3af; padding: 2px 4px;">• ${it}</div>`).join('')}</div>
                 </div>
             `).join('');
         }
 
         function openConfirmModal() {
             if (createdFolders.length === 0 && trashItems.length === 0) {
-                alert("No has organizado carpetas ni marcado ítems para descarte aún.");
-                return;
+                return alert("No has agrupado carpetas ni marcado ítems para descarte.");
             }
             const summary = document.getElementById('modalSummary');
             let html = "";
 
             if (createdFolders.length > 0) {
-                html += "<strong>Carpetas a crear:</strong><br>";
+                html += "<strong>Carpetas que se crearán:</strong><br>";
                 createdFolders.forEach(f => {
                     html += `• <b>${f.name}</b> (${f.items.length} ítems)<br>`;
                 });
             }
 
             if (trashItems.length > 0) {
-                html += `<br><strong style="color: #ef5350;">Carpeta de descarte manual:</strong><br>`;
-                html += `• <b>_POR_ELIMINAR_REVISAR</b> (${trashItems.length} ítems para revisión manual)<br>`;
+                html += `<br><strong style="color: #f87171;">Descarte manual:</strong><br>`;
+                html += `• <b>_POR_ELIMINAR_REVISAR</b> (${trashItems.length} ítems agrupados para que tú decidas tirarlos a la papelera)<br>`;
             }
 
             if (availableItems.length > 0) {
-                html += `<br><span style="color: #ffa726;">Nota: Quedarán ${availableItems.length} ítems sin organizar en el HUD.</span>`;
+                html += `<br><span style="color: #fbbf24;">Pendientes: ${availableItems.length} ítems permanecerán en el HUD.</span>`;
             }
 
             summary.innerHTML = html;
@@ -190,26 +242,21 @@
 
         async function submitFinalOrder() {
             closeModal();
-            const payload = {
-                folders: createdFolders,
-                trash: trashItems
-            };
-
             try {
                 const res = await fetch(slUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify({ folders: createdFolders, trash: trashItems })
                 });
 
                 if (res.ok) {
-                    alert("¡Orden autorizada y ejecutada! Revisa tu inventario de Second Life.");
+                    alert("¡Organización completada! Revisa tu inventario de Second Life.");
                     location.reload();
                 } else {
-                    alert("El HUD reportó un error al procesar las entregas.");
+                    alert("El HUD no pudo procesar la solicitud.");
                 }
             } catch(e) {
-                alert("Error de conexión con el HUD.");
+                alert("Error de comunicación con el HUD.");
             }
         }
 
